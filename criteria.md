@@ -23,8 +23,7 @@ For at least 4 of my 5 test questions, the retrieved chunks include one that
 contains the answer.
 
 **Why this target:**
-<!-- e.g. "One of my questions is about a topic only two documents mention, so
-     I expect that one to be hard." -->
+The campus_life corpus documents are short posts (~317 chars average) where key facts like numbers or specific rules are usually stated in just one sentence. 4 of 5 gives some room for error because phrasing differences between the question and the post might cause semantic retrieval to rank a general document above the exact specific one.
 
 ---
 
@@ -33,8 +32,7 @@ contains the answer.
 Every answer the system produces names at least one source document.
 
 **Why this target:**
-<!-- Why all five and not four? What about your setup makes that achievable —
-     or what would have to go wrong for it not to be? -->
+Every document in the campus_life corpus is passed into the prompt with its filename header `[from ...]`, and the system instruction explicitly demands citing the file. Since top-k provides at least one retrieved document when the gate passes, every generated answer should cite at least one source document.
 
 ---
 
@@ -44,52 +42,26 @@ When I ask a question my documents clearly don't cover, the relevance gate
 stops it and the system returns "I don't have enough information about that" —
 in at least 4 of 5 tries.
 
-<!-- The five questions are the ones in `OUT_OF_SCOPE` at the bottom of
-     `questions.py`, and `run_eval.py` puts them through the gate and writes
-     what happened into your run log. Swap them for your own if you'd rather —
-     just keep five of them, or the "4 of 5" above has nothing to be 4 of. -->
-
 **Why this target:**
-<!-- What did your distances look like when you set the cutoff in Milestone 4?
-     Was there a clean gap, or did the two groups overlap? -->
+The distances for unrelated out-of-scope questions sit between 0.82 and 0.94, while relevant questions match at distances below 0.43. Setting the cutoff in that gap (around 0.55-0.60) should cleanly reject all 5, but I set the target to 4 of 5 in case one random general question happens to share accidental keyword overlap with a course syllabus.
 
 ---
 
-## 4. Something about your chunks
+## 4. Chunks preserve complete posts without truncation
 
-<!-- YOU WRITE THIS ONE.
-
-     How would you know if your chunks were the right size? Name something
-     countable or observable.
-
-     Examples of the right shape — don't copy these, they should come from
-     what you actually saw in Milestone 3:
-       - "At least 4 of 5 sampled chunks read as a complete thought, with no
-          sentence cut in half at either end."
-       - "No chunk is shorter than 200 characters, since anything below that
-          in my corpus turned out to be a heading with no content under it." -->
-
-
+Across all indexed chunks in campus_life, 100% of chunks (88 of 88) have a character length greater than or equal to 150 characters, and no post is broken across a chunk boundary.
 
 **Why this target:**
-
-
+When inspecting the campus_life documents, every file is an individual self-contained student tip between 178 and 549 characters. If chunks are set to fixed arbitrary windows like 800 or 200 without checking boundaries, sentences get cut in half or documents get chopped into tiny fragments. In this corpus, keeping each post intact as a single chunk guarantees every chunk holds a complete thought.
 
 ---
 
-## 5. Your choice
+## 5. Answers directly cite the exact matching file for specific facts
 
-<!-- YOU WRITE THIS ONE TOO.
-
-     Pick something you actually care about getting right. It could be about
-     speed, about refusals, about a particular kind of question your corpus
-     handles badly, about source attribution being correct rather than merely
-     present — anything, as long as it names a number or an observable
-     outcome. -->
-
-
+For at least 4 of my 5 test questions, the primary source cited in the answer matches the exact document where the factual answer originated.
 
 **Why this target:**
+In a vector search with top-k=5, multiple loosely related documents (like follow-up threads or general dorm tips) get retrieved alongside the correct file. It is not enough for an answer to just invent or cite any random retrieved document; it needs to specifically attribute the fact to the real file that contained it. 4 of 5 is realistic because follow-up posts in campus_life sometimes touch on similar keywords.
 
 
 

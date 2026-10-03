@@ -37,6 +37,10 @@ def clean_text(raw: str) -> str:
     # Collapse repeated spaces and tabs, but keep line structure intact.
     text = re.sub(r"[ \t]{2,}", " ", text)
 
+    # strip trailing spaces per line
+    lines = [ln.rstrip() for ln in text.split("\n")]
+    text = "\n".join(lines)
+
     return text.strip()
 
 

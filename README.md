@@ -1,6 +1,6 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
+Bhaswath Datla — campus_life corpus
 
 > **This file is your submission.** Fill it in as you go — most sections get
 > written during the milestone that produces them, not at the end.
@@ -10,10 +10,6 @@
 >
 > **Paste everything as text.** No screenshots, no video. A typed table gets
 > full credit; a picture of the same table gets none.
->
-> Delete these instruction blocks as you replace them. The `<!-- -->` comments
-> are notes to you and don't show up when the page renders — you can leave them
-> or remove them.
 
 ---
 
@@ -21,104 +17,105 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+I picked the `campus_life` corpus, which contains 88 short student posts about college life, dorms, dining, course workloads, and administrative rules. This system is a retrieval-augmented question answering tool that lets students ask plain questions about campus survival tips, like housing lottery quirks or laundry costs. When a question is asked, it retrieves the most relevant post chunks, checks whether they are actually relevant via a distance cutoff gate, and generates a grounded response citing the exact source file.
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+**Chunk size:** 800
+**Overlap:** 120
 
-<!-- What about YOUR documents made you pick these numbers? Short posts and
-     long sectioned guides don't want the same chunking, and "800 seemed
-     reasonable" earns nothing. Point at something you noticed when you read
-     the documents in Milestone 1.
+When looking at the documents in `corpora/campus_life/documents`, almost every file is an individual post between 178 and 549 characters, with an average length of about 317 characters. With the starter's default 800 character window, every post was already smaller than 800 characters so it didn't split anything (88 documents produced exactly 88 chunks). 
 
-     If you changed your mind partway through, say so and say why. That's worth
-     more than pretending you got it right first time.
-
-     Milestone 3. -->
+However, rather than blindly cutting text by character offsets if longer posts are added later, I updated `split_documents` so that each post stays as one complete chunk if it's under 800 characters, and splits on double newlines (`\n\n`) for paragraphs if it exceeds that size. This keeps every student thought intact without cutting sentences in half or creating 2-character trailing fragments.
 
 ## Sample Chunks
 
-<!-- Five chunks, pasted as text. Label each one and name the file it came from
-     AND the function that produced it — the grader checks your code against
-     what you claim here.
-
-     `python app.py chunks -n 5` prints all three for you. Copy them straight
-     across.
-
-     Milestone 3. -->
-
-**Chunk 1** — source: `` — produced by: ``
+**Chunk 1** — source: `admin_add_drop_deadline.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+On the add/drop deadline
+
+You can add a course through the end of the second week. Dropping is a longer window — through the end of week six — but a drop after week two shows as a W on your transcript. Nothing anywhere on the registrar's site says this plainly, and students find out from each other.
 ```
 
-**Chunk 2** — source: `` — produced by: ``
+**Chunk 2** — source: `course_biol_160.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+BIOL 160 Cell Biology
+
+I lived here my sophomore year. Format is lecture three times a week with a weekly lab. Assessment: four unit tests and a cumulative final. Not curved.
+
+Expect 9 to 11 hours a week, the heaviest first-year course by reputation.
+
+The one piece of advice: the unit tests come fast, roughly every three weeks; falling behind once is very hard to recover from.
 ```
 
-**Chunk 3** — source: `` — produced by: ``
+**Chunk 3** — source: `course_hist_118_workload.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Workload for HIST 118 Modern World History
+
+People keep asking so: a lot of reading, about 120 pages a week, but no problem sets. That's real time, not optimistic time.
+
+It's front-loaded — the first month is heavier than the rest, partly because you're learning the format.
 ```
 
-**Chunk 4** — source: `` — produced by: ``
+**Chunk 4** — source: `dining_pellew_dining_hall_followup.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Re: Pellew Dining Hall
+
+Adding to what people have said about Pellew Dining Hall. The wait figure of 12 to 18 minutes at peak matches what I've seen. If you're trying to eat between classes, go before 11:45 and it's a different building entirely.
+
+Also worth saying: the furthest hall from anywhere, next to the athletics centre. Nobody tells you this at orientation.
 ```
 
-**Chunk 5** — source: `` — produced by: ``
+**Chunk 5** — source: `housing_innisfree_hall.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Innisfree Hall — what it's actually like
+
+Transferred in last year, so take this with a grain of salt. Built 1991, renovated 2022. Rooms are doubles arranged as pairs sharing one bathroom between two rooms.
+
+The good: the shared-bathroom-between-two-rooms arrangement is the best compromise on campus.
+
+The bad: no air conditioning, which matters for the first three weeks of September.
+
+Laundry costs $1.75 wash, $1.75 dry, app-based. On noise: moderate; the building is L-shaped and the short wing is much quieter.
 ```
 
 ## Sample Answer
 
-<!-- One complete question and answer, pasted as text, with the source line
-     visible. Milestone 4. -->
-
-**Question:**
+**Question:** Is the housing lottery actually random?
 
 **Answer:**
 
 ```
+The housing lottery is not completely random. While rising sophomores receive a randomly drawn number, juniors and seniors are prioritized by their accumulated credit hours first and only use random selection to break ties (admin_housing_lottery.txt).
 ```
 
-**My relevance cutoff:**
+**My relevance cutoff:** 0.60
 
-<!-- The number you set in config.py, and how you got there.
-
-     You ran five questions your corpus covers and the five in OUT_OF_SCOPE
-     that it clearly doesn't, and wrote down the best distance for each. What
-     did those two groups look like? Where was the gap? Put the actual numbers
-     here — the table below wants all ten rows.
-
-     Milestone 4. -->
+I ran my five test questions and the five out-of-scope questions using `app.py retrieve` to check the cosine distance of the closest match for each. The in-corpus questions all had closest distances ranging between 0.198 and 0.423. The out-of-scope questions had best distances ranging from 0.825 to 0.934. There is a huge gap between 0.423 and 0.825, so 0.60 sits right in the middle, giving plenty of buffer to accept valid variations of in-corpus questions while easily refusing completely unrelated questions.
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| Is the housing lottery actually random? | Yes | 0.248 |
+| How many pages can I print with my printing quota? | Yes | 0.423 |
+| What are the library hours during reading week? | Yes | 0.404 |
+| What are the lunch wait times at Kestrel Commons? | Yes | 0.198 |
+| How much does laundry cost in Old Brewhouse? | Yes | 0.216 |
+| What is the capital of Mongolia? | No | 0.825 |
+| How do I change the oil in a diesel engine? | No | 0.934 |
+| Who won the 1994 World Cup? | No | 0.886 |
+| What is the recommended dosage of ibuprofen for a headache? | No | 0.844 |
+| How do I write a for loop in Rust? | No | 0.896 |
 
 ## How I Used AI
 
-<!-- Two specific moments. For each: what you asked for, what came back, and
-     what you changed about it.
+**1.** I asked an AI model to draft a paragraph-splitting chunker using `re.split` with double newlines. The initial code it gave stripped out single newlines within posts and didn't check whether the entire post was already smaller than `config.CHUNK_SIZE`. I modified it to check `len(text) <= max_chunk` first so the 88 short campus life posts don't get unnecessarily fragmented, and added the fallback logic for longer guides.
 
-     "I asked Claude to write the chunking function from my notes. It ignored
-     the overlap, so I added that myself" is the level of detail we're after.
-     "I used AI to help me code" is not.
-
-     Milestone 5. -->
-
-**1.**
-
-**2.**
+**2.** I gave an AI assistant my list of 5 test questions and asked if my expected keywords (`credit hours`, `600`, `10pm`, etc.) were specific enough to test for retrieval accuracy in Unit 2. It suggested keeping them as exact literal substrings rather than full sentences so simple string matching in `scorer.py` won't fail due to minor phrasing differences.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
